@@ -1,0 +1,9 @@
+from src.system import DigitClassifierSystem
+import torch
+# system = DigitClassifierSystem.load_from_checkpoint(
+#    './artifacts/ckpts/train_flow/epoch=4-step=7500.ckpt')
+
+# print(system)
+
+torch.load('./src/tests/images/regression/test-data.pt')
+

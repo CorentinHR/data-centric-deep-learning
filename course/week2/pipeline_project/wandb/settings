@@ -1,0 +1,5 @@
+[default]
+entity = corentinhr
+project = train_flow
+base_url = https://api.wandb.ai
+
