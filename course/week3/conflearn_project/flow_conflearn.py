@@ -10,6 +10,7 @@ import pandas as pd
 from os.path import join
 from pathlib import Path
 from pprint import pprint
+from torch import tensor, cat
 from torch.utils.data import DataLoader, TensorDataset
 
 from metaflow import FlowSpec, step, Parameter
@@ -168,6 +169,19 @@ class TrainIdentifyReview(FlowSpec):
       # --
       # probs_: np.array[float] (shape: |test set|)
       # ===============================================
+      X_train = tensor(X[train_index])
+      X_test = tensor(X[test_index])
+      y_train = tensor(y[train_index])
+      y_test = tensor(y[test_index])
+      train_dataset = TensorDataset(X_train, y_train)
+      test_dataset = TensorDataset(X_test, y_test)
+      train_dataloader = DataLoader(train_dataset, batch_size=self.config.train.optimizer.batch_size)
+      test_dataloader = DataLoader(test_dataset, batch_size=self.config.train.optimizer.batch_size)
+      sc_system = SentimentClassifierSystem(self.config)
+      trainer = Trainer(max_epochs=self.config.train.optimizer.max_epochs)
+      trainer.fit(sc_system, train_dataloader)
+      preds_ = trainer.predict(dataloaders=test_dataloader)
+      probs_ = cat(preds_).squeeze()
       assert probs_ is not None, "`probs_` is not defined."
       probs[test_index] = probs_
 
@@ -212,6 +226,7 @@ class TrainIdentifyReview(FlowSpec):
     # --
     # ranked_label_issues: List[int]
     # =============================
+    ranked_label_issues = find_label_issues(self.all_df.label, prob, return_indices_ranked_by='self_confidence')
     assert ranked_label_issues is not None, "`ranked_label_issues` not defined."
 
     # save this to class
@@ -308,6 +323,9 @@ class TrainIdentifyReview(FlowSpec):
     # dm.dev_dataset.data = dev slice of self.all_df
     # dm.test_dataset.data = test slice of self.all_df
     # # ====================================
+    dm.train_dataset.data = self.all_df.iloc[:train_size]
+    dm.dev_dataset.data = self.all_df.iloc[train_size:train_size+dev_size]
+    dm.test_dataset.data = self.all_df.iloc[train_size+dev_size:]
 
     # start from scratch
     system = SentimentClassifierSystem(self.config)
