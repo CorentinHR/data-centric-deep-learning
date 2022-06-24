@@ -26,6 +26,10 @@ def get_ks_score(tr_probs, te_probs):
   #   predicted probabilities from test test
   # score: float - between 0 and 1
   # ============================
+  tr_probs = tr_probs.numpy()
+  te_probs = te_probs.numpy()
+  ks_result = ks_2samp(tr_probs, te_probs)
+  score = ks_result.pvalue
   return score
 
 
