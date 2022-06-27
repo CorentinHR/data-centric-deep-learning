@@ -72,6 +72,15 @@ def get_hist_score(tr_probs, te_probs, bins=10):
   # Read the documentation for `np.histogram` carefully, in
   # particular what `bin_edges` represent.
   # ============================
+  tr_heights, bin_edges = np.histogram(tr_probs.numpy(), bins=bins, density=True)
+  te_heights, _ = np.histogram(te_probs.numpy(), bins=bin_edges, density=True)
+  bin_diff = np.diff(bin_edges)
+  score = 0
+  for i in range(0, bins):
+    tr_area = bin_diff[i] * tr_heights[i]
+    te_area = bin_diff[i] * te_heights[i]
+    intersect = min(tr_area, te_area)
+    score += intersect
   return score
 
 
@@ -100,6 +109,11 @@ def get_vocab_outlier(tr_vocab, te_vocab):
   #   Map from word to count for test examples
   # score: float (between 0 and 1)
   # ============================
+  # num_seen is the intersection between tr_vocab and te_vocab
+  num_seen = len(tr_vocab.keys() & te_vocab.keys())
+  # num_total is the whole list inside test vocabulary
+  num_total = len(te_vocab.keys())
+  score = 1 - (num_seen/num_total)
   return score
 
 
@@ -134,6 +148,9 @@ class MonitoringSystem:
     # 
     # `te_probs_cal`: torch.Tensor
     # ============================
+    iso_reg = IsotonicRegression(out_of_bounds='clip').fit(tr_probs, tr_labels)
+    tr_probs_cal = torch.tensor(iso_reg.predict(tr_probs))
+    te_probs_cal = torch.tensor(iso_reg.predict(te_probs))
     return tr_probs_cal, te_probs_cal
 
   def monitor(self, te_vocab, te_probs):
