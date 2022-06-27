@@ -153,6 +153,7 @@ class JustTrainTwice(FlowSpec):
     # --
     # acc_diff: float (> 0 and < 1)
     # =============================
+    acc_diff = np.abs(en_results['acc'] - es_results['acc'])
 
     print(f'[lambd={lambd}] Results on English reviews:')
     pprint(en_results)
@@ -187,6 +188,8 @@ class JustTrainTwice(FlowSpec):
     # -- 
     # Our solution is 2 lines of code.
     # =============================
+    accs = [i['acc_diff'] for i in inputs]
+    index = np.argmin(accs)
 
     en_results = inputs[index].en_results
     es_results = inputs[index].es_results
