@@ -3,6 +3,7 @@ Training Group Information". See https://arxiv.org/pdf/2107.09044.pdf.
 """
 import os
 import torch
+from torch import cat
 import random
 import numpy as np
 from pprint import pprint
@@ -85,6 +86,11 @@ class JustTrainTwice(FlowSpec):
     # --
     # weights: torch.FloatTensor (length: |ds|)
     # =============================
+    probs = self.trainer.predict(model=self.system, dataloaders=dl)
+    probs = cat(probs).squeeze()
+    preds = np.round(probs.numpy())
+    labels = ds.get_labels().numpy()
+    weights = (preds != labels).astype(int)
     self.weights = weights
     
     # search through all of these lambda for upweighting 
